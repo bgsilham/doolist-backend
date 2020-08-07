@@ -2,9 +2,9 @@ const db = require('../utils/db')
 
 module.exports = {
   getAllUser: (start, end, data = {}) => {
-    const sql = `SELECT id, name, email, created_at, updated_at FROM users 
-    WHERE name LIKE '${data.search || ''}%' 
-    ORDER BY name ${parseInt(data.sort) ? 'DESC' : 'ASC'}
+    const sql = `SELECT id, email, created_at FROM users 
+    WHERE email LIKE '${data.search || ''}%' 
+    ORDER BY email ${parseInt(data.sort) ? 'DESC' : 'ASC'}
     LIMIT ${end} OFFSET ${start}`
     return new Promise((resolve, reject) => {
       db.query(sql, (error, result, fields) => {
@@ -17,8 +17,8 @@ module.exports = {
   },
   getUserCount: (data = {}) => {
     const sql = `SELECT COUNT(*) as total FROM users
-    WHERE name LIKE '${data.search || ''}%' 
-    ORDER BY name ${parseInt(data.sort) ? 'DESC' : 'ASC'}`
+    WHERE email LIKE '${data.search || ''}%' 
+    ORDER BY email ${parseInt(data.sort) ? 'DESC' : 'ASC'}`
     return new Promise((resolve, reject) => {
       db.query(sql, (error, result) => {
         if (error) {
@@ -48,17 +48,6 @@ module.exports = {
           reject(Error(error))
         }
         resolve(result)
-      })
-    })
-  },
-  updateUser: (data) => {
-    const sql = 'UPDATE users SET ? WHERE ?'
-    return new Promise((resolve, reject) => {
-      db.query(sql, data, (error, result) => {
-        if (error) {
-          reject(Error(error))
-        }
-        resolve(result.affectedRows)
       })
     })
   },

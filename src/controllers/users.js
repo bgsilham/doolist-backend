@@ -4,9 +4,6 @@ const qs = require('querystring')
 const moment = require('moment')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
-const config = require('../utils/upload')
-const upload = config.single('picture')
-const multer = require('multer')
 const saltRounds = 10
 const {APP_URL} = process.env
 
@@ -85,15 +82,14 @@ module.exports = {
     response.status(200).send(data)
   },
   createUser: async (request, response) => {
-    const { name, email, password } = request.body
-    if (name && email && password && name !== '' && email !== '' && password !== '') {
+    const { email, password } = request.body
+    if (email && password && email !== '' && password !== '') {
       const isExists = await userModel.getUserByCondition({ email })
       if (isExists.length < 1) {
         const userData = {
-          name,
           email,
           password: bcrypt.hashSync(request.body.password, saltRounds),
-          created_at: moment().format('LLLL')
+          created_at: moment().format()
         }
         const result = await userModel.createUser(userData)
         if (result) {
@@ -101,7 +97,6 @@ module.exports = {
             success: true,
             msg: 'user data succesfully created!',
             data: {
-              name: userData.name,
               email: userData.email,
               created_at: userData.created_at
             }
@@ -153,17 +148,11 @@ module.exports = {
             succes: true,
             msg: 'login succes',
             id: data[0].id,
-            name: data[0].name,
             email: data[0].email,
-            picture: data[0].picture,
-            address: data[0].address,
-            age: data[0].age,
             token: jwt.sign(
               {
                 id: data[0].id,
-                name: data[0].name,
                 email: data[0].email,
-                role: 'user'
               },
               process.env.JWT_KEY,
               {
@@ -181,78 +170,6 @@ module.exports = {
       }
       response.status(401).send(login)
     }
-  },
-  updateUser: async function (request, response) {
-    upload(request, response, async  function (error) {
-      if (error instanceof multer.MulterError) {
-        return response.status(500).json({
-          status: 500,
-          msg: error,
-          data: []
-        })
-      } else if (error) {
-        return response.status(500).json({
-          status: 500,
-          msg: error,
-          data: []
-        })
-      }
-
-      try {
-        const { id } = request.params
-        const { name, picture, address, age } = request.body
-        const fetchUser = await userModel.getUserByCondition({ id: parseInt(id) })
-        if (fetchUser.length > 0) {
-          let latestPicture = fetchUser[0].picture
-          if (request.file) {
-            latestPicture = request.file.filename
-          }
-          if (name && name !== '' && address && address !== '' && age && age !== '') {
-            const userData = [
-              { 
-                name,
-                picture: request.file ? `${process.env.APP_URL}/img/${request.file.filename}` : latestPicture,
-                address,
-                age,
-                updated_at: moment().format('YYYY-MM-DD hh:mm:ss')
-              },
-              { id: parseInt(id) }
-            ]
-            const result = await userModel.updateUser(userData)
-            if (result) {
-              const data = {
-                success: true,
-                msg: 'user has been updated',
-                data: {
-                  name: userData[0].name,
-                  picture: userData[0].picture,
-                  address: userData[0].address,
-                  age: userData[0].age,
-                  updated_at: userData[0].updated_at
-                }
-              }
-              response.status(200).send(data)
-            } else {
-              const data = {
-                success: false,
-                msg: 'failed to update'
-              }
-              response.status(400).send(data)
-            }
-          }
-        } else {
-          const data = {
-            success: false,
-            msg: `User with id ${request.params.id} not found!`
-          }
-          response.status(400).send(data)
-        }
-      } catch (error) {
-        return response
-          .status(500)
-          .json({ status: 500, message: error, data: [] })
-      }
-    })
   },
   getIdUser: async (request, response) => {
     const { id } = request.params
