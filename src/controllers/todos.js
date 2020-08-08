@@ -17,7 +17,7 @@ const getPerPage = (_perPage) => {
   if (perPage && perPage > 0) {
     return perPage
   } else {
-    return 5
+    return 100
   }
 }
 
@@ -61,6 +61,9 @@ module.exports = {
           msg: 'todo succesfully created!',
           data: todosData
         }
+        const id = {result}
+        todosData.id = id.result
+        request.io.emit('data', todosData)
         response.status(201).send(data)
       } else {
         const data = {
@@ -129,6 +132,7 @@ module.exports = {
             msg: 'todo has been updated',
             data: todoData[0]
           }
+          request.io.emit('update', data)
           response.status(200).send(data)
         } else {
           const data = {
@@ -157,6 +161,7 @@ module.exports = {
           success: true,
           msg: `Todo with id ${request.params.id} deleted`
         }
+        request.io.emit('delete', data)
         response.status(200).send(data)
       } else {
         const data = {

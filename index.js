@@ -10,6 +10,9 @@ app.use(cors())
 app.use(bodyparser.json())
 app.use(bodyparser.urlencoded({extended:false}))
 
+const server = require('http').createServer(app)
+const io = require('socket.io')(server)
+
 app.get('/',(request,response) => {
     response.send('Server accessed')
 })
@@ -18,6 +21,17 @@ app.get('/',(request,response) => {
 const users = require('./src/routes/users')
 const todos = require('./src/routes/todos')
 
+io.on('connection', client => {
+    console.log('New user connected')
+    client.on('disconnect', () => {
+        console.log('User disconnected')
+    })
+  });
+
+app.use((req, res, next) => {
+    req.io = io;
+    next()
+})
 app.use('/users', users)
 app.use('/todos', todos)
 
@@ -25,6 +39,6 @@ app.get('*', (request,response) => {
     response.status(404).send('Page Not found')
 })
 
-app.listen (PORT, () => {
+server.listen (PORT, () => {
    console.log(`App is listening`)
 })
