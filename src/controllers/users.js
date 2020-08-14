@@ -82,12 +82,14 @@ module.exports = {
     response.status(200).send(data)
   },
   createUser: async (request, response) => {
-    const { email, password } = request.body
-    if (email && password && email !== '' && password !== '') {
-      const isExists = await userModel.getUserByCondition({ email })
+    const { username, password } = request.body
+    const _email = username.concat('@gmi.com')
+    if (username && password && username !== '' && password !== '') {
+      const isExists = await userModel.getUserByCondition( _email )
       if (isExists.length < 1) {
         const userData = {
-          email,
+          username,
+          email: _email,
           password: bcrypt.hashSync(request.body.password, saltRounds),
           created_at: moment().format()
         }
@@ -97,6 +99,7 @@ module.exports = {
             success: true,
             msg: 'user data succesfully created!',
             data: {
+              username: userData.username,
               email: userData.email,
               created_at: userData.created_at
             }
@@ -113,7 +116,7 @@ module.exports = {
       } else {
         const data = {
           success: false,
-          msg: 'email has been registered'
+          msg: 'username has been registered'
         }
         response.status(400).send(data)
       }
